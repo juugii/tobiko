@@ -1,0 +1,165 @@
+MIXCR='/storage1/downloads/mixcr-2.1.12/mixcr'
+
+#(optional) filter fastq according to celltypes
+/storage1/local/python/python-3.6.5/bin/umi_tools extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin /storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_trimmed_R1.fastq.gz --stdout /storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_MAIT1_R1.fastq --read2-in /storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_trimmed_R2.fastq.gz --read2-out=/storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_MAIT1_R2.fastq --filter-cell-barcode --whitelist=mait1BC.txt
+
+#on cell subset
+${MIXCR} align --report report_muThywt01.txt --species MusMusculus --parameters rna-seq -t 24 --save-description /storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_MAIT1_R2.fastq alignments_muThywt01.vdjca
+
+#or on trimmed fastq
+${MIXCR} align --report report_muThywt01.txt --species MusMusculus --parameters rna-seq -t 24 --save-description /storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/fastq/muThy_MAITwt01_trimmed_R2.fastq.gz alignments_muThywt01.vdjca
+
+#assemble and export
+${MIXCR} assemble -f --index indexFile_MAIT1 --report report_muThywt01_Assembl_MAIT1.txt alignments_muThywt01_MAIT1.vdjca clones_muThywt01_MAIT1.clns
+${MIXCR} exportAlignments -f -cloneId indexFile_MAIT1 -descrR1 alignments_muThywt01_MAIT1.vdjca alignments_MAIT1.txt
+${MIXCR} exportClones --chains TRA TRB clones_muThywt01_MAIT1.clns clones_MAIT1_ALL.txt
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA TRB clones_muThywt01_MAIT1.clns clones_MAIT1.txt
+
+
+#extract clone information
+awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' alignments_MAIT1.txt | grep -v "^SN" | sed 1d | sort -k 2 > clonespercells.tsv
+#or alternatively, clone 2 is a MAIT TCR, extract CB associated
+awk '{split($2, aay, "_"); if($1=="2"){print $1, " ", aay[2]}}' alignments_MAIT1.txt | sort -k 2 > clonespercells_clone2.tsv
+
+#extract clone names
+awk '{print $1, $4 $5 "-" $7}' clones_MAIT1.txt | sed 1d | sort -u > clonesids.tsv
+
+#create a table enable taging of clones in scAnalyses
+join -j 1 -o 1.2 2.2 <(sort -k1 clonespercells.tsv) <(sort -k1 clonesids.tsv) > clonetable.tsv
+
+awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' alignments_MAIT1.txt | grep -v "^SN" | sed 1d | sort -k 2 >  
+awk '{print $1, $4 $5 "-" $7}' clones_MAIT1.txt | sed 1d | sort -u > clonesids.tsv
+join -j 1 -o 1.2 2.2 <(sort -k1 clonespercells.tsv) <(sort -k1 clonesids.tsv) > clonetable.tsv
+rm clonespercells.tsv clonesids.tsv
+
+
+#-----------------
+#TODO check that barcodes are properly attributed
+
+#OPTIONS
+UMITOOLS='/storage1/local/python/python-3.6.5/bin/umi_tools'
+MIXCR='/storage1/downloads/mixcr-2.1.12/mixcr'
+
+WHITELIST='/storage1/analyses/francois/singleCell/muMAITsc/analyses/ikura01/muThy_MAITwt01/logs/whitelist_muThy_MAITwt01.txt'
+SPECY='MusMusculus'
+READ1='/storage1/analyses/francois/singleCell/muMAITsc/analyses/ikura01/muThy_MAITwt01/fastq/muThy_MAITwt01_trimmed_R1.fastq.gz'
+READ2='/storage1/analyses/francois/singleCell/muMAITsc/analyses/ikura01/muThy_MAITwt01/fastq/muThy_MAITwt01_trimmed_R2.fastq.gz'
+CORES=12
+
+#cleaner script
+${UMITOOLS} extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin ${READ1} --stdout ${PREFIX}_barcoded_R1.fastq.gz --read2-in ${READ2} --read2-out=${PREFIX}_barcoded_R2.fastq.gz --filter-cell-barcode --whitelist=${WHITELIST}
+
+${MIXCR} align --report report_align_${PREFIX}.txt --species ${SPECY} --parameters rna-seq -t ${CORES} --save-description ${PREFIX}_barcoded_R2.fastq.gz alignments_${PREFIX}.vdjca
+
+${MIXCR} assemble -f --index indexFile_${PREFIX} --report report_assembl_${PREFIX}.txt alignments_${PREFIX}.vdjca clones_${PREFIX}.clns
+${MIXCR} exportAlignments -f -cloneId indexFile_${PREFIX} -descrR1 alignments_${PREFIX}.vdjca alignments_${PREFIX}.txt
+${MIXCR} exportClones --chains TRA TRB clones_${PREFIX}.clns clones_${PREFIX}_ALL.txt
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA TRB clones_${PREFIX}.clns clones_${PREFIX}.txt
+
+
+awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > clonespercells.tsv 
+awk '{print $1, $4 $5 "-" $7}' clones_${PREFIX}.txt | sed 1d | sort -u | sed "s/,/|/g" > clonesids.tsv
+join -j 1 -o 1.2 2.2 <(sort -k1 clonespercells.tsv) <(sort -k1 clonesids.tsv) > clonetable_${PREFIX}.tsv
+rm clonespercells.tsv clonesids.tsv
+
+
+
+#formatting in R
+
+library(reshape2)
+
+#functions
+readIkura <- function(path){
+
+	require(Matrix)
+
+	message("reading data...")
+	mat <- readMM(paste0(path, '/matrix.mtx'))
+	genes <- read.delim(paste0(path, '/genes.tsv'), sep="\t", header=FALSE, stringsAsFactors=FALSE)$V2
+	cells <- read.delim(paste0(path, '/barcodes.tsv'), sep="\t", header=FALSE, stringsAsFactors=FALSE)$V1
+
+	colnames(mat) <- cells
+	rownames(mat) <- genes
+
+	return(mat)
+
+}
+
+
+#will work only if more than two clones
+#ie if nrow(mat)>1
+concatMat <- function(short, full){
+
+	if (nrow(short)>1) {
+
+		#this part has to be checked
+
+		message("concatenating matrix...")
+		a <- data.frame(barcode=as.character(colnames(full)), row.names=as.character(colnames(full)))
+		b <- as.data.frame(cbind(t(short), barcode=colnames(short)))
+	
+		c <- merge(a, b, by='barcode', all=TRUE)
+		rownames(c) <- c$barcode
+		c <- c[,-1]
+		c[is.na(c)] <- 0
+
+		mat <- Matrix(rbind(as.matrix(full), t(c)), sparse=TRUE)
+
+		return(mat)
+
+	} else {
+
+		#is working
+
+		message("concatenating matrix...")
+		a <- data.frame(barcode=as.character(colnames(full)), row.names=as.character(colnames(full)))
+		b <- as.data.frame(cbind(t(short), barcode=colnames(short)))
+	
+		c <- merge(a, b, by='barcode', all=TRUE)
+		rownames(c) <- c$barcode
+		c <- as.data.frame(as.integer(c[,-1]))
+		colnames(c) <- colnames(b)[1]
+		c[is.na(c)] <- 0
+
+		mat <- Matrix(rbind(as.matrix(full), t(c)), sparse=TRUE)
+
+		return(mat)
+	
+	}
+	
+}
+
+exportMat <- function(mat, path){
+
+        cells <- colnames(mat)
+        genes <- rownames(mat)
+
+        message("exporting matrix...")
+        write.table(x=data.frame(cell=cells), file=paste0(path,"/barcodes.tsv"), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+        write.table(x=data.frame(gene=genes, gene=genes), file=paste0(path,"/genes.tsv"), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+        writeMM(mat, file=paste0(path,"/matrix.mtx"))
+
+		#should add something to avoid NULL output
+
+}
+
+
+
+
+#exec
+clones <- read.delim(cloneFile, header=FALSE, sep=" ")
+short <- dcast(clones, V2~V1)
+rownames(short) <- short[,1]
+short <- short[,-1]
+
+full <- readIkura(ikuraPath)
+
+newMat <- concatMat(short, full)
+
+exportMat(newMat, exportPath)
+
+cloneFile='/storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/muThysapko01/clonetable_sapko01.tsv'
+ikuraPath='/storage1/analyses/francois/singleCell/muMAITsc/analyses/ikura01/muThy_MAITsapko01/outs/'
+exportPath='/storage1/analyses/francois/singleCell/muMAITsc/analyses/mixcr01/muThysapko01/mikisa_muThysapko01/'
+
+
