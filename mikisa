@@ -1,0 +1,126 @@
+#! /usr/bin/env bash
+
+#Jules GILET <jules.gilet@curie.fr>
+
+#custom pipeline for the TCR repertoire analysis of single cell 10x experiments
+#look for TCRA & TCRB chains
+#repertoire analysis is done with mixcr
+
+#requires preprocess with ikura
+#requires (clean trimmed) fastq gzipped files
+#requires python-3.6.5 or above
+#requires umi_tools 0.5.4 or above
+#requires mixcr 2.1.12 or above
+#requires R-3.5.0 or above
+
+#options
+CORES=16
+
+if [ $# -eq 0 ]; then
+
+        echo "The script requires the following options:
+
+                        mikusa		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
+                                        [-i|--ikura] <ikuraOutputPath>
+					[-t|--threads] <coresNb> (optional, default is 10)
+
+                        directory should be specified as absolute paths
+
+                        Additional requirements:
+                        requires python-3.6.5, R-3.5.0, mixcr-2.1.12, awk
+                        requires ikura preprocessed data
+			"
+
+        exit 0
+
+fi
+
+while [ "$#" -gt 0 ]; do
+        case "$1" in
+
+                -h|--help)      echo "The script requires the following options:
+
+                        mikusa          [-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
+                                        [-i|--ikura] <ikuraOutputPath>
+                                        [-t|--threads] <coresNb> (optional, default is 10)
+
+                        directory should be specified as absolute paths
+
+                        Additional requirements:
+                        requires python-3.6.5, R-3.5.0, mixcr-2.1.12, awk
+                        requires ikura preprocessed data
+                        "
+
+                        exit 0;;
+
+		-s|--specy) SPECY="$2"; shift 2;;
+                -i|--ikura) IKURA="$2"; shift 2;;
+		-t|--threads) CORES="$2"; shift 2;;
+
+                -*|--*) echo "unknown option: $1" >&2; exit 1;;
+
+        esac
+done
+
+
+#dependencies
+UMITOOLS='/storage1/local/python/python-3.6.5/bin/umi_tools'
+MIXCR='/storage1/downloads/mixcr-2.1.12/mixcr'
+POSTPROCESS='/storage1/scripts/scRNAseq/mikisa/postProcess'
+
+#exec
+SECONDS=0
+
+#setup directories
+if [ ! -d "$IKURA" ]; then
+        echo "Error: Ikura output path doesn't exist"
+	exit 1
+fi
+
+cd ${IKURA}
+
+PREFIX=${PWD##*/}
+FASTQDIR=${IKURA}/fastq
+LOGDIR=${IKURA}/logs
+READ1=${FASTQDIR}/*trimmed_R1.fastq.gz
+READ2=${FASTQDIR}/*trimmed_R2.fastq.gz
+WHITELIST=$(ls ${LOGDIR}/whitelist_*.txt)
+OUTIKURA=${IKURA}/outs
+
+if [ ! -d "mikusa" ]; then
+        mkdir mikusa
+fi
+
+OUTPATH=${IKURA}/mikusa
+
+#data process
+echo "job started on" $(date)
+
+echo "extracting barcodes..."
+${UMITOOLS} extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin ${READ1} --stdout ${FASTQDIR}/${PREFIX}_barcoded_R1.fastq.gz --read2-in ${READ2} --read2-out=${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz --filter-cell-barcode --whitelist=${WHITELIST}
+
+echo "aligning reads..."
+${MIXCR} align --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species ${SPECY} --parameters rna-seq -t ${CORES} --save-description ${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz ${OUTPATH}/alignments_${PREFIX}.vdjca
+
+echo "creating tables..."
+${MIXCR} assemble -f --index ${OUTPATH}/indexFile_${PREFIX} --report ${LOGDIR}/report_mixcrAssembl_${PREFIX}.txt ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/clones_${PREFIX}.clns
+${MIXCR} exportAlignments -f -cloneId ${OUTPATH}/indexFile_${PREFIX} -descrR1 ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt
+${MIXCR} exportClones --chains TRA TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALL.txt
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
+
+
+awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' ${OUTPATH}/alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > ${OUTPATH}/clonespercells.tsv 
+awk '{print $1, $4 $5 "-" $7}' ${OUTPATH}/clones_${PREFIX}.txt | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
+join -j 1 -o 1.2 2.2 <(sort -k1 ${OUTPATH}/clonespercells.tsv) <(sort -k1 ${OUTPATH}/clonesids.tsv) > ${OUTPATH}/clonetable_${PREFIX}.tsv
+rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
+
+echo "exporting data to the matrix..."
+${POSTPROCESS} ${OUTPATH}/clonetable_${PREFIX}.tsv ${OUTIKURA} ${OUTPATH}
+
+
+END=${SECONDS}
+
+echo "job complete on " $(date)
+echo "total execution time (min): " $((${END} / 60))
+
+exit 0

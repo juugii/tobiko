@@ -1,0 +1,113 @@
+#! /data/users/jgilet/.local/R/R-3.5.0/bin/Rscript
+
+#Jules GILET <jules.gilet@curie.fr>
+
+#part of the single cell custom pipeline for for TCR repertoire analysis in 10x datasets
+#add the TCR clones information to the expression matrix produced by ikura
+
+#reading opt file as first argument
+args <- commandArgs(TRUE)
+
+if(length(args)!=3){
+	stop("Error: the postprocess script requires 3 arguments (<cloneTableLoc> <ikuraOutdir> <mikusaOutdir>).", call.=FALSE)
+} else if(length(args)==3){
+
+	cloneFile <- args[1]
+	ikuraPath <- args[2]
+	exportPath <- args[3]
+
+}
+
+#libraries
+library(reshape2)
+
+#functions
+readIkura <- function(path){
+
+	require(Matrix)
+
+	message("reading data...")
+	mat <- readMM(paste0(path, '/matrix.mtx'))
+	genes <- read.delim(paste0(path, '/genes.tsv'), sep="\t", header=FALSE, stringsAsFactors=FALSE)$V2
+	cells <- read.delim(paste0(path, '/barcodes.tsv'), sep="\t", header=FALSE, stringsAsFactors=FALSE)$V1
+
+	colnames(mat) <- cells
+	rownames(mat) <- genes
+
+	return(mat)
+
+}
+
+#will work only if more than two clones
+#ie if nrow(mat)>1
+concatMat <- function(short, full){
+
+	if (nrow(short)>1) {
+
+		#this part has to be checked
+
+		message("concatenating matrix...")
+		a <- data.frame(barcode=as.character(colnames(full)), row.names=as.character(colnames(full)))
+		b <- as.data.frame(cbind(t(short), barcode=colnames(short)))
+	
+		c <- merge(a, b, by='barcode', all=TRUE)
+		rownames(c) <- c$barcode
+		c <- c[,-1]
+		c[is.na(c)] <- 0
+
+		mat <- Matrix(rbind(as.matrix(full), t(c)), sparse=TRUE)
+
+		return(mat)
+
+	} else {
+
+		#is working
+
+		message("concatenating matrix...")
+		a <- data.frame(barcode=as.character(colnames(full)), row.names=as.character(colnames(full)))
+		b <- as.data.frame(cbind(t(short), barcode=colnames(short)))
+	
+		c <- merge(a, b, by='barcode', all=TRUE)
+		rownames(c) <- c$barcode
+		c <- as.data.frame(as.integer(c[,-1]))
+		colnames(c) <- colnames(b)[1]
+		c[is.na(c)] <- 0
+
+		mat <- Matrix(rbind(as.matrix(full), t(c)), sparse=TRUE)
+
+		return(mat)
+	
+	}
+	
+}
+
+exportMat <- function(mat, path){
+
+        cells <- colnames(mat)
+        genes <- rownames(mat)
+
+        message("exporting matrix...")
+        write.table(x=data.frame(cell=cells), file=paste0(path,"/barcodes.tsv"), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+        write.table(x=data.frame(gene=genes, gene=genes), file=paste0(path,"/genes.tsv"), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
+        writeMM(mat, file=paste0(path,"/matrix.mtx"))
+
+		#should add something to avoid NULL output
+
+}
+
+
+
+
+#exec
+clones <- read.delim(cloneFile, header=FALSE, sep=" ")
+short <- dcast(clones, V2~V1)
+rownames(short) <- short[,1]
+short <- short[,-1]
+
+full <- readIkura(ikuraPath)
+
+newMat <- concatMat(short, full)
+
+exportMat(newMat, exportPath)
+
+q(save='no')
