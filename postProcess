@@ -20,6 +20,7 @@ if(length(args)!=3){
 
 #libraries
 library(reshape2)
+library(ggplot2)
 
 #functions
 readIkura <- function(path){
@@ -100,6 +101,17 @@ exportMat <- function(mat, path){
 
 #exec
 clones <- read.delim(cloneFile, header=FALSE, sep=" ")
+
+#frequency graph
+freq <- data.frame(table(clones$V2))
+freq <- freq[order(freq$Freq, decreasing=TRUE),]
+freq$Var1 <- factor(freq$Var1, levels=freq$Var1)
+
+pdf(paste0(exportPath, "/TCR_frequencies.pdf"))
+	ggplot(freq, aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme(axis.text.x = element_text(angle = 90))
+dev.off()
+
+#adding TCR to the matrix
 short <- dcast(clones, V2~V1)
 rownames(short) <- short[,1]
 short <- short[,-1]
