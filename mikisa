@@ -105,14 +105,15 @@ ${MIXCR} align --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species ${SP
 echo "creating tables..."
 ${MIXCR} assemble -f --index ${OUTPATH}/indexFile_${PREFIX} --report ${LOGDIR}/report_mixcrAssembl_${PREFIX}.txt ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/clones_${PREFIX}.clns
 ${MIXCR} exportAlignments -f -cloneId ${OUTPATH}/indexFile_${PREFIX} -descrR1 ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt
-${MIXCR} exportClones --chains TRA TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALL.txt
-${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
-
+${MIXCR} exportClones --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALLraw.txt
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRA_${PREFIX}.tsv
+${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRB_${PREFIX}.tsv
 
 awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' ${OUTPATH}/alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > ${OUTPATH}/clonespercells.tsv 
-awk '{print $1, $4 $5 "-" $7}' ${OUTPATH}/clones_${PREFIX}.txt | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
+awk '{print $1, $4 $5 "-" $7}' ${OUTPATH}/clonesSummary_${PREFIX}.tsv | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
 join -j 1 -o 1.2 2.2 <(sort -k1 ${OUTPATH}/clonespercells.tsv) <(sort -k1 ${OUTPATH}/clonesids.tsv) > ${OUTPATH}/clonetable_${PREFIX}.tsv
-rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
+#rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
 
 echo "exporting data to the matrix..."
 ${POSTPROCESS} ${OUTPATH}/clonetable_${PREFIX}.tsv ${OUTIKURA} ${OUTPATH}
