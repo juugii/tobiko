@@ -131,7 +131,15 @@ freq <- freq[order(freq$Freq, decreasing=TRUE),]
 freq$Var1 <- factor(freq$Var1, levels=freq$Var1)
 
 pdf(paste0(exportPath, "/TCR_frequencies.pdf"), height=14)
-	ggplot(freq, aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected")
+	ggplot(freq, aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="frequency of all TCR chains detected")
+	ggplot(freq[grepl("^TRA", freq[,1]),], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="TCR alpha chains")
+	ggplot(freq[grepl("^TRB", freq[,1]),], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="TCR beta chains")
+	ggplot(freq[grepl("^TRA", freq[,1]),][1:5,], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="top5 TCR alpha chains")
+dev.off()
+
+pdf(paste0(exportPath, "/TCR_Topfrequencies.pdf"), height=14)
+        ggplot(freq[grepl("^TRA", freq[,1]),][1:5,], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="top5 TCR alpha chains")
+	ggplot(freq[grepl("^TRB", freq[,1]),][1:5,], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="top5 TCR beta chains")
 dev.off()
 
 #adding TCR to the matrix
