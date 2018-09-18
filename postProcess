@@ -107,8 +107,8 @@ freq <- data.frame(table(clones$V2))
 freq <- freq[order(freq$Freq, decreasing=TRUE),]
 freq$Var1 <- factor(freq$Var1, levels=freq$Var1)
 
-pdf(paste0(exportPath, "/TCR_frequencies.pdf"))
-	ggplot(freq, aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme(axis.text.x = element_text(angle = 90))
+pdf(paste0(exportPath, "/TCR_frequencies.pdf"), height=14)
+	ggplot(freq, aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected")
 dev.off()
 
 #adding TCR to the matrix
