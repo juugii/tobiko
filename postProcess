@@ -94,7 +94,7 @@ exportMat <- function(mat, path){
         write.table(x=data.frame(gene=genes, gene=genes), file=paste0(path,"/genes.tsv"), row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
         writeMM(mat, file=paste0(path,"/matrix.mtx"))
 
-		#should add something to avoid NULL output
+	return("Done.")
 
 }
 
@@ -118,6 +118,18 @@ assembleFullTCRperCell <- function(tcrmat){
         }
 
         return(tcr_table)
+
+}
+
+
+sparseRbind <- function(full, short){
+
+	message("concatenating matrix...")
+	res <- Matrix(0, nrow=(NROW(full) + NROW(short)), ncol=length(colnames(full)), dimnames=list(c(rownames(full), rownames(short)), colnames(full)))
+	res[rownames(full), colnames(full)] <- full
+	res[rownames(short), colnames(short)] <- short
+
+	return(res)
 
 }
 
@@ -150,9 +162,12 @@ short <- short[,-1]
 tcr_table <- assembleFullTCRperCell(short)
 write.csv(tcr_table, file=paste0(exportPath, "/fullTCRtablePerCell.csv"), row.names=FALSE)
 
+short <- Matrix(as.matrix(short))
+
 full <- readIkura(ikuraPath)
 
-newMat <- concatMat(short, full)
+#newMat <- concatMat(short, full)
+newMat <- sparseRbind(full, short)
 
 exportMat(newMat, exportPath)
 
