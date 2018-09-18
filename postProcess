@@ -21,6 +21,7 @@ if(length(args)!=3){
 #libraries
 library(reshape2)
 library(ggplot2)
+library(Matrix)
 
 #functions
 readIkura <- function(path){
@@ -86,6 +87,8 @@ concatMat <- function(short, full){
 
 exportMat <- function(mat, path){
 
+	require(Matrix)
+
         cells <- colnames(mat)
         genes <- rownames(mat)
 
@@ -123,6 +126,8 @@ assembleFullTCRperCell <- function(tcrmat){
 
 
 sparseRbind <- function(full, short){
+
+	require(Matrix)
 
 	message("concatenating matrix...")
 	res <- Matrix(0, nrow=(NROW(full) + NROW(short)), ncol=length(colnames(full)), dimnames=list(c(rownames(full), rownames(short)), colnames(full)))
