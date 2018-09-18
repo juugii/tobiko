@@ -39,6 +39,7 @@ readIkura <- function(path){
 
 }
 
+
 #will work only if more than two clones
 #ie if nrow(mat)>1
 concatMat <- function(short, full){
@@ -82,6 +83,7 @@ concatMat <- function(short, full){
 	
 }
 
+
 exportMat <- function(mat, path){
 
         cells <- colnames(mat)
@@ -97,6 +99,27 @@ exportMat <- function(mat, path){
 }
 
 
+assembleFullTCRperCell <- function(tcrmat){
+
+        cellsWithFullTcr <- short[,colSums(short>0)==2]
+        nbCells <- dim(cellsWithFullTcr)[2]
+
+        tcr_table <- data.frame(cell=character(nbCells), TCR=character(nbCells), stringsAsFactors=FALSE)
+
+        for (cells in 1:nbCells){
+                vec <- rownames(cellsWithFullTcr[cellsWithFullTcr[,cells]>0,])
+                if((grepl("^TRA", vec[1]) & grepl("^TRB", vec[2])) | (grepl("^TRA", vec[2]) & grepl("^TRB", vec[1]))){
+                        tcr_table[cells,1] <- colnames(cellsWithFullTcr)[cells]
+                        tcr_table[cells,2] <- paste(vec[grepl("^TRA", vec)], vec[grepl("^TRB", vec)], sep="_")
+                } else {
+                        tcr_table[cells,1] <- colnames(cellsWithFullTcr)[cells]
+                        tcr_table[cells,2] <- "inconsistant_fullTCRAB"
+                }
+        }
+
+        return(tcr_table)
+
+}
 
 
 #exec
@@ -115,6 +138,10 @@ dev.off()
 short <- dcast(clones, V2~V1)
 rownames(short) <- short[,1]
 short <- short[,-1]
+
+#reassemble and export cells with complete alpha and beta TCR chains
+tcr_table <- assembleFullTCRperCell(short)
+write.csv(tcr_table, file=paste0(exportPath, "/fullTCRtablePerCell.csv"), row.names=FALSE)
 
 full <- readIkura(ikuraPath)
 
