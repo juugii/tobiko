@@ -33,6 +33,8 @@ join -j 1 -o 1.2 2.2 <(sort -k1 clonespercells.tsv) <(sort -k1 clonesids.tsv) > 
 rm clonespercells.tsv clonesids.tsv
 
 
+mikusa -s specy -i ikuraPath
+
 #-----------------
 #TODO check that barcodes are properly attributed
 

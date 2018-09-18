@@ -14,15 +14,17 @@
 #requires R-3.5.0 or above
 
 #options
+BC="T"
 CORES=16
 
 if [ $# -eq 0 ]; then
 
         echo "The script requires the following options:
 
-                        mikusa		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
+			mikusa          [-n|--skip-rebarcoding] (optional, mostly for debugging)
+                        		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
-					[-t|--threads] <coresNb> (optional, default is 10)
+					[-t|--threads] <coresNb> (optional, default is 16)
 
                         directory should be specified as absolute paths
 
@@ -40,9 +42,10 @@ while [ "$#" -gt 0 ]; do
 
                 -h|--help)      echo "The script requires the following options:
 
-                        mikusa          [-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
+			mikusa		[-n|--skip-rebarcoding] (optional, mostly for debugging)
+                        		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
-                                        [-t|--threads] <coresNb> (optional, default is 10)
+                                        [-t|--threads] <coresNb> (optional, default is 16)
 
                         directory should be specified as absolute paths
 
@@ -53,6 +56,7 @@ while [ "$#" -gt 0 ]; do
 
                         exit 0;;
 
+		-n|--skip-rebarcoding) BC="F"; shift 1;;
 		-s|--specy) SPECY="$2"; shift 2;;
                 -i|--ikura) IKURA="$2"; shift 2;;
 		-t|--threads) CORES="$2"; shift 2;;
@@ -96,8 +100,12 @@ OUTPATH=${IKURA}/mikusa
 #data process
 echo "job started on" $(date)
 
-echo "extracting barcodes..."
-${UMITOOLS} extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin ${READ1} --stdout ${FASTQDIR}/${PREFIX}_barcoded_R1.fastq.gz --read2-in ${READ2} --read2-out=${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz --filter-cell-barcode --whitelist=${WHITELIST}
+if [ "${BC}"="T" ]
+then
+	echo "extracting barcodes..."
+	${UMITOOLS} extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin ${READ1} --stdout ${FASTQDIR}/${PREFIX}_barcoded_R1.fastq.gz --read2-in ${READ2} --read2-out=${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz --filter-cell-barcode --whitelist=${WHITELIST}
+
+fi
 
 echo "aligning reads..."
 ${MIXCR} align --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species ${SPECY} --parameters rna-seq -t ${CORES} --save-description ${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz ${OUTPATH}/alignments_${PREFIX}.vdjca
