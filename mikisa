@@ -119,7 +119,7 @@ ${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeatur
 ${MIXCR} exportClones -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRB_${PREFIX}.tsv
 
 awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' ${OUTPATH}/alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > ${OUTPATH}/clonespercells.tsv 
-awk '{print $1, $4 $5 "-" $7}' ${OUTPATH}/clonesSummary_${PREFIX}.tsv | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
+awk -F "\t" '{print $1, $4 $6 "-" $8}' ${OUTPATH}/clonesSummary_${PREFIX}.tsv | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
 join -j 1 -o 1.2 2.2 <(sort -k1 ${OUTPATH}/clonespercells.tsv) <(sort -k1 ${OUTPATH}/clonesids.tsv) > ${OUTPATH}/clonetable_${PREFIX}.tsv
 #rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
 
