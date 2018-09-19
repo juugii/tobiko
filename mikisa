@@ -108,7 +108,7 @@ then
 fi
 
 echo "aligning reads..."
-${MIXCR} align --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species ${SPECY} --parameters rna-seq -t ${CORES} --save-description ${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz ${OUTPATH}/alignments_${PREFIX}.vdjca
+${MIXCR} align -f --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species ${SPECY} --parameters rna-seq -t ${CORES} --save-description ${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz ${OUTPATH}/alignments_${PREFIX}.vdjca
 
 echo "creating tables..."
 ${MIXCR} assemble -f --index ${OUTPATH}/indexFile_${PREFIX} --report ${LOGDIR}/report_mixcrAssembl_${PREFIX}.txt ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/clones_${PREFIX}.clns
