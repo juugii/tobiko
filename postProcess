@@ -104,7 +104,7 @@ exportMat <- function(mat, path){
 
 assembleFullTCRperCell <- function(tcrmat){
 
-        cellsWithFullTcr <- short[,colSums(short>0)==2]
+        cellsWithFullTcr <- tcrmat[,colSums(tcrmat>0)==2]
         nbCells <- dim(cellsWithFullTcr)[2]
 
         tcr_table <- data.frame(cell=character(nbCells), TCR=character(nbCells), stringsAsFactors=FALSE)
@@ -159,16 +159,23 @@ pdf(paste0(exportPath, "/TCR_Topfrequencies.pdf"), height=10)
 dev.off()
 
 #adding TCR to the matrix
-short <- dcast(clones, V2~V1)
+suppressMessages(short <- dcast(clones, V2~V1))
 rownames(short) <- short[,1]
 short <- short[,-1]
 
 #reassemble and export cells with complete alpha and beta TCR chains
-tcr_table <- assembleFullTCRperCell(short)
-write.csv(tcr_table, file=paste0(exportPath, "/fullTCRtablePerCell.csv"), row.names=FALSE)
+if(max(colSums(short>0))>1){
+
+	tcr_table <- assembleFullTCRperCell(short)
+	write.csv(tcr_table, file=paste0(exportPath, "/fullTCRtablePerCell.csv"), row.names=FALSE)
+
+} else {
+
+	warning("Impossible to find ny cell with both alpha and beta chains detected. Skipping...")
+
+}
 
 short <- Matrix(as.matrix(short))
-
 full <- readIkura(ikuraPath)
 
 #newMat <- concatMat(short, full)
