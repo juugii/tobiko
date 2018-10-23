@@ -16,6 +16,7 @@
 #options
 BC="T"
 CORES=16
+UTHR=1
 
 if [ $# -eq 0 ]; then
 
@@ -24,6 +25,7 @@ if [ $# -eq 0 ]; then
 			tobiko          [-n|--skip-rebarcoding] (optional, mostly for debugging)
                         		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
+					[-u|--umithreshold] <threshold> (optional, default is 1)
 					[-t|--threads] <coresNb> (optional, default is 16)
 
                         directory should be specified as absolute paths
@@ -45,6 +47,7 @@ while [ "$#" -gt 0 ]; do
 			tobiko		[-n|--skip-rebarcoding] (optional, mostly for debugging)
                         		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
+					[-u|--umithreshold] <threshold> (optional, default is 1)
                                         [-t|--threads] <coresNb> (optional, default is 16)
 
                         directory should be specified as absolute paths
@@ -59,6 +62,7 @@ while [ "$#" -gt 0 ]; do
 		-n|--skip-rebarcoding) BC="F"; shift 1;;
 		-s|--specy) SPECY="$2"; shift 2;;
                 -i|--ikura) IKURA="$2"; shift 2;;
+		-u|--umithreshold) UTHR="$2"; shift 2;;
 		-t|--threads) CORES="$2"; shift 2;;
 
                 -*|--*) echo "unknown option: $1" >&2; exit 1;;
@@ -114,9 +118,9 @@ echo "creating tables..."
 ${MIXCR} assemble -f --index ${OUTPATH}/indexFile_${PREFIX} --report ${LOGDIR}/report_mixcrAssembl_${PREFIX}.txt ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/clones_${PREFIX}.clns
 ${MIXCR} exportAlignments -f -cloneId ${OUTPATH}/indexFile_${PREFIX} -descrR1 ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt
 ${MIXCR} exportClones -f --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALLraw.txt
-${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
-${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRA ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRA_${PREFIX}.tsv
-${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count 2 --chains TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRB_${PREFIX}.tsv
+${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
+${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRA ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRA_${PREFIX}.tsv
+${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRB_${PREFIX}.tsv
 
 awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' ${OUTPATH}/alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > ${OUTPATH}/clonespercells.tsv 
 awk -F "\t" '{print $1, $4 $6 "-" $8}' ${OUTPATH}/clonesSummary_${PREFIX}.tsv | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
