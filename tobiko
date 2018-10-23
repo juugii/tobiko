@@ -21,7 +21,7 @@ if [ $# -eq 0 ]; then
 
         echo "The script requires the following options:
 
-			mikusa          [-n|--skip-rebarcoding] (optional, mostly for debugging)
+			tobiko          [-n|--skip-rebarcoding] (optional, mostly for debugging)
                         		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
 					[-t|--threads] <coresNb> (optional, default is 16)
@@ -42,7 +42,7 @@ while [ "$#" -gt 0 ]; do
 
                 -h|--help)      echo "The script requires the following options:
 
-			mikusa		[-n|--skip-rebarcoding] (optional, mostly for debugging)
+			tobiko		[-n|--skip-rebarcoding] (optional, mostly for debugging)
                         		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
                                         [-i|--ikura] <ikuraOutputPath>
                                         [-t|--threads] <coresNb> (optional, default is 16)
