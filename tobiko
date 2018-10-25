@@ -95,11 +95,11 @@ READ2=${FASTQDIR}/*trimmed_R2.fastq.gz
 WHITELIST=$(ls ${LOGDIR}/whitelist_*.txt)
 OUTIKURA=${IKURA}/outs
 
-if [ ! -d "mikusa" ]; then
-        mkdir mikusa
+if [ ! -d "tobiko" ]; then
+        mkdir tobiko
 fi
 
-OUTPATH=${IKURA}/mikusa
+OUTPATH=${IKURA}/tobiko
 
 #data process
 echo "job started on" $(date)
