@@ -74,7 +74,7 @@ done
 #dependencies
 UMITOOLS='/storage1/local/python/python-3.6.5/bin/umi_tools'
 MIXCR='/storage1/downloads/mixcr-2.1.12/mixcr'
-POSTPROCESS='/storage1/scripts/scRNAseq/mikisa/postProcess'
+POSTPROCESS='/storage1/scripts/scRNAseq/tobiko/postProcess'
 
 #exec
 SECONDS=0
