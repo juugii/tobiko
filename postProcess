@@ -45,6 +45,8 @@ readIkura <- function(path){
 #ie if nrow(mat)>1
 concatMat <- function(short, full){
 
+	short <- short[ ,colnames(short) %in% colnames(full) ]
+
 	if (nrow(short)>1) {
 
 		#this part has to be checked
@@ -128,6 +130,7 @@ assembleFullTCRperCell <- function(tcrmat){
 sparseRbind <- function(full, short){
 
 	require(Matrix)
+	short <- short[ ,colnames(short) %in% colnames(full) ]
 
 	message("concatenating matrix...")
 	res <- Matrix(0, nrow=(NROW(full) + NROW(short)), ncol=length(colnames(full)), dimnames=list(c(rownames(full), rownames(short)), colnames(full)))
