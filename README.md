@@ -1,6 +1,8 @@
 ## Tobiko:
 
-A companion software of [ikura](https://github.com/juugii/ikura) for the detection of rearranged TCR (and BCR) chains in single cell experiments. It has been primarily devolopped to detect productive rearranged TCR chains and assemble full receptors in Tab cells from 10x 3' sequenced libraries. It currently has limited support for other receptors (PR are welcome). Analysis typically takes 1h30, plus up to 5 hours for the rebarcoding of the sequencing files.
+This branch keeps track of the code that has been used for the article (under review). For an exact reproducibility, the dependencies should be mixcr v2.1.12, R v3.5.0, python v3.6.5 & umi-tools 0.5.4.
+
+A companion software of [ikura](https://github.com/juugii/ikura) for the detection of rearranged TCR (and BCR) chains in single cell experiments. It has been primarily developed to detect productive rearranged TCR chains and assemble full receptors in Tab cells from 10x 3' sequenced libraries. It currently has limited support for other receptors (PR are welcome). Analysis typically takes 1h30, plus up to 5 hours for the rebarcoding of the sequencing files.
 
 Tobiko requires data preprocessed with Ikura, as it takes its results folder as input.
 
