@@ -1,66 +1,73 @@
 #! /usr/bin/env bash
 
-#Jules GILET <jules.gilet@curie.fr>
+# Jules GILET <jules.gilet@curie.fr>
 
-#custom pipeline for the TCR repertoire analysis of single cell 10x experiments
-#look for TCRA & TCRB chains
-#repertoire analysis is done with mixcr
+# custom pipeline for the TCR (and BCR) repertoire analysis of single cell 10x 3' libraries
+# has been optimized for TCR
+# repertoire analysis is done with mixcr
 
-#requires preprocess with ikura
-#requires (clean trimmed) fastq gzipped files
-#requires python-3.6.5 or above
-#requires umi_tools 0.5.4 or above
-#requires mixcr 2.1.12 or above
-#requires R-3.5.0 or above
+# requires preprocess with ikura
+# requires (clean trimmed) fastq gzipped files
+# requires python-3.6.5 or above
+# requires umi_tools 0.5.4 or above
+# requires mixcr 2.1.12 or above
+# requires R-3.5.0 or above
 
-#options
-BC="T"
-CORES=16
-UTHR=1
+# options
+VERSION="v1.0"
+EXECDIR=${PWD}
+SCRIPTDIR="$(dirname "$0")"
 
-if [ $# -eq 0 ]; then
 
-        echo "The script requires the following options:
+usage(){
 
-			tobiko          [-n|--skip-rebarcoding] (optional, mostly for debugging)
-                        		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
-                                        [-i|--ikura] <ikuraOutputPath>
-					[-u|--umithreshold] <threshold> (optional, default is 1)
-					[-t|--threads] <coresNb> (optional, default is 16)
+	echo ""
+	echo "Tobiko ${VERSION}"
+	echo "Usage:"
+	echo "$0	[-n|--skip-rebarcoding] (optional, mostly for debugging)
+		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
+		[-c|--chains] <anyof:IGH,IGL,IGK,TRA,TRB,TRG,TRD,IGH,IGL,IGK> (optional, default is TRA,TRB)
+		[-i|--ikura] <ikuraOutputPath>
+		[-u|--umithreshold] <threshold> (optional, default is 1)
+		[-t|--threads] <coresNb> (optional, default is 16)
 
-                        directory should be specified as absolute paths
-
-                        Additional requirements:
-                        requires python-3.6.5, R-3.5.0, mixcr-2.1.12, awk
-                        requires ikura preprocessed data
-			"
+		Directory should be specified as absolute path.
+		"
 
         exit 0
 
+
+}
+
+if [ $# -eq 0 ]; then
+
+	usage
+
 fi
+
+cd "${SCRIPTDIR}"
+source dependencies.txt
+source sources/pydep
+
+if ! sources/checkdep; then
+        exit 1
+fi
+
+
+# options
+BC="T"
+CORES=16
+UTHR=1
+CHAINS="TRA,TRB"
 
 while [ "$#" -gt 0 ]; do
         case "$1" in
 
-                -h|--help)      echo "The script requires the following options:
-
-			tobiko		[-n|--skip-rebarcoding] (optional, mostly for debugging)
-                        		[-s|--specy] <specy:hs|HomoSapiens|mmu|MusMusculus>
-                                        [-i|--ikura] <ikuraOutputPath>
-					[-u|--umithreshold] <threshold> (optional, default is 1)
-                                        [-t|--threads] <coresNb> (optional, default is 16)
-
-                        directory should be specified as absolute paths
-
-                        Additional requirements:
-                        requires python-3.6.5, R-3.5.0, mixcr-2.1.12, awk
-                        requires ikura preprocessed data
-                        "
-
-                        exit 0;;
+                -h|--help)	usage;;
 
 		-n|--skip-rebarcoding) BC="F"; shift 1;;
 		-s|--specy) SPECY="$2"; shift 2;;
+		-c|--chains) CHAINS="$2"; shift 2;;
                 -i|--ikura) IKURA="$2"; shift 2;;
 		-u|--umithreshold) UTHR="$2"; shift 2;;
 		-t|--threads) CORES="$2"; shift 2;;
@@ -71,15 +78,10 @@ while [ "$#" -gt 0 ]; do
 done
 
 
-#dependencies
-UMITOOLS='/storage1/local/python/python-3.6.5/bin/umi_tools'
-MIXCR='/storage1/downloads/mixcr-2.1.12/mixcr'
-POSTPROCESS='/storage1/scripts/scRNAseq/tobiko/postProcess'
-
-#exec
+# exec
 SECONDS=0
 
-#setup directories
+# setup directories
 if [ ! -d "$IKURA" ]; then
         echo "Error: Ikura output path doesn't exist"
 	exit 1
@@ -101,10 +103,10 @@ fi
 
 OUTPATH=${IKURA}/tobiko
 
-#data process
+# data process
 echo "job started on" $(date)
 
-if [ "${BC}"="T" ]
+if [ "${BC}" = "T" ]
 then
 	echo "extracting barcodes..."
 	${UMITOOLS} extract --bc-pattern=CCCCCCCCCCCCCCCCNNNNNNNNNN --stdin ${READ1} --stdout ${FASTQDIR}/${PREFIX}_barcoded_R1.fastq.gz --read2-in ${READ2} --read2-out=${FASTQDIR}/${PREFIX}_barcoded_R2.fastq.gz --filter-cell-barcode --whitelist=${WHITELIST}
@@ -117,7 +119,7 @@ ${MIXCR} align -f --report ${LOGDIR}/report_mixcrAlign_${PREFIX}.txt --species $
 echo "creating tables..."
 ${MIXCR} assemble -f --index ${OUTPATH}/indexFile_${PREFIX} --report ${LOGDIR}/report_mixcrAssembl_${PREFIX}.txt ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/clones_${PREFIX}.clns
 ${MIXCR} exportAlignments -f -cloneId ${OUTPATH}/indexFile_${PREFIX} -descrR1 ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt
-${MIXCR} exportClones -f --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALLraw.txt
+${MIXCR} exportClones -f --chains ${CHAINS} ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clones_${PREFIX}_ALLraw.txt
 ${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRA,TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesSummary_${PREFIX}.tsv
 ${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRA ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRA_${PREFIX}.tsv
 ${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFeature CDR3 -aaFeature CDR3 --filter-out-of-frames --minimal-clone-count ${UTHR} --chains TRB ${OUTPATH}/clones_${PREFIX}.clns ${OUTPATH}/clonesTCRB_${PREFIX}.tsv
@@ -125,10 +127,10 @@ ${MIXCR} exportClones -f -cloneId -count -fraction -vgenes -dgenes -jgenes -nFea
 awk '{split($2, aay, "_"); {print $1, " ", aay[2]}}' ${OUTPATH}/alignments_${PREFIX}.txt | grep -v "^SN" | sed 1d | sort -k 2 > ${OUTPATH}/clonespercells.tsv 
 awk -F "\t" '{print $1, $4 $6 "-" $8}' ${OUTPATH}/clonesSummary_${PREFIX}.tsv | sed 1d | sort -u | sed "s/,/|/g" > ${OUTPATH}/clonesids.tsv
 join -j 1 -o 1.2 2.2 <(sort -k1 ${OUTPATH}/clonespercells.tsv) <(sort -k1 ${OUTPATH}/clonesids.tsv) > ${OUTPATH}/clonetable_${PREFIX}.tsv
-#rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
+# rm ${OUTPATH}/clonespercells.tsv ${OUTPATH}/clonesids.tsv ${OUTPATH}/alignments_${PREFIX}.vdjca ${OUTPATH}/alignments_${PREFIX}.txt ${OUTPATH}/clones_${PREFIX}.clns
 
 echo "exporting data to the matrix..."
-${POSTPROCESS} ${OUTPATH}/clonetable_${PREFIX}.tsv ${OUTIKURA} ${OUTPATH}
+${RPATH}/Rscript ${SCRIPTDIR}/sources/postProcess ${OUTPATH}/clonetable_${PREFIX}.tsv ${OUTIKURA} ${OUTPATH}
 
 
 END=${SECONDS}

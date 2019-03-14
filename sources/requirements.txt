@@ -1,0 +1,2 @@
+umi_tools>=0.5.4
+multiqc>=1.5

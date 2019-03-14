@@ -1,11 +1,8 @@
-#! /data/users/jgilet/.local/R/R-3.5.0/bin/Rscript
+# Jules GILET <jules.gilet@curie.fr>
 
-#Jules GILET <jules.gilet@curie.fr>
+# part of the single cell custom pipeline for for TCR repertoire analysis in 10x datasets
+# add the TCR clones information to the expression matrix produced by ikura
 
-#part of the single cell custom pipeline for for TCR repertoire analysis in 10x datasets
-#add the TCR clones information to the expression matrix produced by ikura
-
-#reading opt file as first argument
 args <- commandArgs(TRUE)
 
 if(length(args)!=3){
@@ -18,12 +15,12 @@ if(length(args)!=3){
 
 }
 
-#libraries
-library(reshape2)
-library(ggplot2)
-library(Matrix)
+# libraries
+suppressWarnings(suppressMessages(library(reshape2)))
+suppressWarnings(suppressMessages(library(ggplot2)))
+suppressWarnings(suppressMessages(library(Matrix)))
 
-#functions
+# functions
 readIkura <- function(path){
 
 	require(Matrix)
@@ -41,8 +38,8 @@ readIkura <- function(path){
 }
 
 
-#will work only if more than two clones
-#ie if nrow(mat)>1
+# will work only if more than two clones
+# ie if nrow(mat)>1
 concatMat <- function(short, full){
 
 	short <- short[ ,colnames(short) %in% colnames(full) ]
@@ -142,10 +139,10 @@ sparseRbind <- function(full, short){
 }
 
 
-#exec
+# exec
 clones <- read.delim(cloneFile, header=FALSE, sep=" ")
 
-#frequency graph
+# frequency graph
 freq <- data.frame(table(clones$V2))
 freq <- freq[order(freq$Freq, decreasing=TRUE),]
 freq$Var1 <- factor(freq$Var1, levels=freq$Var1)
@@ -161,12 +158,12 @@ pdf(paste0(exportPath, "/TCR_Topfrequencies.pdf"), height=10)
 	ggplot(freq[grepl("^TRB", freq[,1]),][1:5,], aes(x=Var1, y=Freq)) + geom_histogram(stat='identity') + theme_bw() + theme(axis.text.x = element_text(angle=90, hjust=1)) + labs(y="number of clones detected", title="top5 TCR beta chains")
 dev.off()
 
-#adding TCR to the matrix
+# adding TCR to the matrix
 suppressMessages(short <- dcast(clones, V2~V1))
 rownames(short) <- short[,1]
 short <- short[,-1]
 
-#reassemble and export cells with complete alpha and beta TCR chains
+# reassemble and export cells with complete alpha and beta TCR chains
 if(max(colSums(short>0))>1){
 
 	tcr_table <- assembleFullTCRperCell(short)
@@ -181,7 +178,7 @@ if(max(colSums(short>0))>1){
 short <- Matrix(as.matrix(short))
 full <- readIkura(ikuraPath)
 
-#newMat <- concatMat(short, full)
+# newMat <- concatMat(short, full)
 newMat <- sparseRbind(full, short)
 
 exportMat(newMat, exportPath)

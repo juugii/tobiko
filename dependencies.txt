@@ -1,0 +1,10 @@
+# Dependencies:
+
+# this is where tobiko resolves his dependencies
+# by default tobiko will look in your path
+# if needed you can edit the following paths according to your system configuration
+
+PYPATH=$(dirname $(which python3.6))
+RPATH=$(dirname $(which R))
+
+MIXCR=mixcr

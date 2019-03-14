@@ -1,0 +1,2 @@
+UMITOOLS=${PYPATH}/umi_tools
+MTQC=${PYPATH}/multiqc
