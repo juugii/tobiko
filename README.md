@@ -2,7 +2,9 @@
 
 A companion software of [ikura](https://github.com/juugii/ikura) for the detection of rearranged TCR (and BCR) chains in single cell experiments. It has been primarily developed to detect productive rearranged TCR chains and assemble full receptors in Tab cells from 10x 3' sequenced libraries. It currently has limited support for other receptors (PR are welcome). Analysis typically takes 1h30, plus up to 5 hours for the rebarcoding of the sequencing files.
 
-Tobiko requires data preprocessed with Ikura, as it takes its results folder as input.
+Tobiko requires data preprocessed with Ikura.
+
+For an exact reproductibility with the article (in press), see the corresponding git branch.
 
 ## Getting Started
 
@@ -18,7 +20,7 @@ Usage: ./tobiko	[-n|--skip-rebarcoding] (optional, mostly for debugging)
 		Directory should be specified as absolute path.
 ```
 
-Tobiko only requires to specify.
+Tobiko execution is as simple as:
 
 ```bash
 $ ./tobiko --specy HomoSapiens --ikura /path/to/nameOfSample
@@ -56,10 +58,13 @@ $ make install PREFIX=/path/to/your/local/folder
 You can then add the install folder in the path of your bashrc.
 
 
-## Citation
+## Citations:
 
-Tobiko's article is under reviewing.
-Tobiko relies on external tools, please cite:
+Tobiko has been developped for the following work:
+
+Legoux, F.*, Gilet, J.*, Procopio, E., Echasserieau, K., Bernardeau, K. & Lantz, O (In Press). Molecular mechanisms of lineage decisions in metabolite-specific T cells. Nature Immunology.
+
+Tobiko relies on external tools:
 
 [mixcr](https://mixcr.readthedocs.io/en/master/index.html): Dmitriy A. Bolotin, Stanislav Poslavsky, Alexey N. Davydov, Felix E. Frenkel, Lorenzo Fanchi, Olga I. Zolotareva, Saskia Hemmers, Ekaterina V. Putintseva, Anna S. Obraztsova, Mikhail Shugay, Ravshan I. Ataullakhanov, Alexander Y. Rudensky, Ton N. Schumacher & Dmitriy M. Chudakov. "Antigen receptor repertoire profiling from RNA-seq data." Nature Biotechnology 35, 908–911 (2017)
 
