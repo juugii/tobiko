@@ -4,7 +4,11 @@ A companion software of [ikura](https://github.com/juugii/ikura) for the detecti
 
 Tobiko requires data preprocessed with Ikura.
 
-For an exact reproductibility with the article (in press), see the corresponding git branch.
+Ikura has been developped for the following work:
+
+[Molecular mechanisms of lineage decisions in metabolite-specific T cells.](https://doi.org/10.1038/s41590-019-0465-3) Legoux F*, Gilet J*, Procopio E, Echasserieau K, Bernardeau K, Lantz O. Nat Immunol (2019).
+
+For an exact reproductibility with the article, see the corresponding git branch.
 
 ## Getting Started
 
@@ -60,11 +64,11 @@ You can then add the install folder in the path of your bashrc.
 
 ## Citations:
 
-Tobiko has been developped for the following work:
+Ikura has been developped for the following work:
 
-Legoux, F.*, Gilet, J.*, Procopio, E., Echasserieau, K., Bernardeau, K. & Lantz, O (In Press). Molecular mechanisms of lineage decisions in metabolite-specific T cells. Nature Immunology.
+[Molecular mechanisms of lineage decisions in metabolite-specific T cells.](https://doi.org/10.1038/s41590-019-0465-3) Legoux F*, Gilet J*, Procopio E, Echasserieau K, Bernardeau K, Lantz O. Nat Immunol (2019).
 
-Tobiko relies on external tools:
+Tobiko relies on external tools, please cite:
 
 [mixcr](https://mixcr.readthedocs.io/en/master/index.html): Dmitriy A. Bolotin, Stanislav Poslavsky, Alexey N. Davydov, Felix E. Frenkel, Lorenzo Fanchi, Olga I. Zolotareva, Saskia Hemmers, Ekaterina V. Putintseva, Anna S. Obraztsova, Mikhail Shugay, Ravshan I. Ataullakhanov, Alexander Y. Rudensky, Ton N. Schumacher & Dmitriy M. Chudakov. "Antigen receptor repertoire profiling from RNA-seq data." Nature Biotechnology 35, 908–911 (2017)
 
